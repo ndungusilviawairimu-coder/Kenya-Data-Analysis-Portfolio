@@ -1,0 +1,976 @@
+KENYA HEALTH FACILITIES SQL ANALYSIS
+
+ANALYST : Silvia
+INSTITUTION : Chuka University
+DATABASE : Kenya_Analysis.db
+TABLE :health
+SOURCE : Kenya Ministry of Health 2017
+ROWS : 8,933 | Columns : 22
+DATE : [7/13/2026]
+
+PHASE 1 - DATA QUALITY CHECKS
+
+-- Check total row count
+
+SELECT COUNT(*)
+FROM health;
+8932 Rows
+
+-- Check column names
+
+SELECT name FROM pragma_table_info('health');
+
+Code,Name,Registration_number,Keph level,Facility type,Owner,Regulatory body,Beds,Cots,County,Constituency,Sub county,Ward,Operation status,Open_whole_day,Open_public_holidays,Open_weekends,Open_late_night,Service_names,Approved,Public visible,Closed.
+
+-- Check data types on numeric columns
+
+SELECT typeof(Beds), typeof(Cots),typeof(Code)
+FROM health LIMIT 1;
+
+typeof(Beds) = integer
+typeof(Cots) = integer
+typeof(Code) = integer
+
+
+-- Check unique operation status values
+
+SELECT DISTINCT "Operation status", COUNT(*) AS count
+FROM health
+GROUP BY "Operation status"
+ORDER BY count DESC;
+
+Operation status       count
+Operational            8932
+
+
+-- Check unique owner values 
+
+SELECT DISTINCT Owner, COUNT(*) AS count
+FROM health
+GROUP BY Owner
+ORDER BY COUNT DESC;
+ Owner                                                   COUNT
+Ministry of Health                                     4370 
+Private Enterprise (Institution)                       1008
+Private Practice - Nurse / Midwifery                   787
+Private Practice - General Practitioner                578
+Private Practice - Clinical Officer                    577
+Kenya Episcopal Conference - Catholic Secretariat      362
+Christian Health Association of Kenya                  322
+Non-Governmental Organizations                         299
+Other Faith Based                                      235
+Company Medical Service                                89
+Private Practice - Medical Specialist                  86
+Public Institution                                     69
+Private Practice - Unspecified                         48
+Academic                                               33
+Armed Forces                                           22
+Parastatal                                             18
+Supreme Council for Kenya Muslims                       9
+Laboratory Technician/Technologist                      7
+Private Company                                         5
+State Coorporation                                      4
+Community                                               2
+Prisons                                                 1
+Local Authority                                         1
+
+SECTION A - BASIC EXPLORATION
+Q1 .How many health facilities exist in each county ? Order from most to fewest.
+
+SELECT County, COUNT(name) AS Number_of_facilities
+FROM health
+GROUP BY County
+ORDER BY Number_of_facilities DESC;
+
+Nairobi county has the most number of health facilities (783)
+Lamu county has the least number of health facilities (47)
+
+Q2 .How many facilities of each facility_type exist nationally ?
+
+SELECT DISTINCT "Facility type",COUNT(*) AS count
+FROM health
+GROUP BY "Facility type"
+ORDER BY count DESC;
+
+Facility type                                      count                                       
+Dispensaries and clinic-out patient only           6605
+Basic primary health care facility                 1500
+Primary care hospitals                             386
+Secondary care hospitals                           159
+VCT                                                141
+Laboratory                                         51
+Administrative Offices                             28
+Comprehensive primary health care facility         26
+Comprehensive Teaching & Referral                  12
+Radiology Clinic                                   8
+Pharmacy                                           5
+Regional Blood Transfusion Centre                  3
+Primary health care services                       2
+Hospitals                                          2
+Farewell Home                                      2
+Blood Bank                                         2
+
+
+
+                                              
+
+Q3 .How many facilities does each Owner category have ? (Government vs Private vs Faith      
+    Based vs NGO)
+
+SELECT COUNT(*) AS count,
+CASE WHEN Owner IN ( 'Ministry of Health','Public Institution','Academic','Armed Forces','Parastatal','State Coorporation','Community','Prisons','Local Authority') THEN 'Government'
+WHEN Owner IN ( 'Private Enterprise (Institution)','Private Practice - Nurse / Midwifery' ,'Private Practice - General Practitioner','Private Practice - Clinical Officer','Private Practice - Medical Specialist','Private Practice - Unspecified','Laboratory Technician/Technologist','Private Company' )THEN 'Private'
+WHEN Owner IN ( 'Kenya Episcopal Conference - Catholic Secretariat','Christian Health Association of Kenya','Other Faith Based','Supreme Council for Kenya Muslims') THEN 'Faith Based'
+WHEN Owner = 'Non-Governmental Organizations' 	THEN 'NGO'
+ELSE 'Other'
+END AS Owner_category
+FROM health
+GROUP BY Owner_Category
+ORDER BY COUNT(*) DESC;
+count        Owner_category
+4520         Government
+3096         Private
+566          Faith Based
+451          Other
+299          NGO
+
+Q4 .How many facilities are Operational vs Non-Operational vs Closed ?
+
+SELECT DISTINCT "Operation status", COUNT(*) AS count
+FROM health
+GROUP BY "Operation status"
+ORDER BY count DESC;
+
+Operation status       count
+Operational            8932
+OBSERVATION : All health facilities in this dataset are operational
+
+Q5 .Which 10 counties have the fewest total facilities ?
+
+SELECT County, COUNT(name) AS Number_of_facilities
+FROM health
+GROUP BY county
+ORDER BY Number_of_facilities ASC
+LIMIT 10;
+
+County                Number_of_facilities
+Lamu	                     47
+Isiolo	               49
+Tana River	               55
+Samburu	               72
+Vihiga	               78
+Taita Taveta	         84
+Mandera	               85
+Wajir                      88	
+Marsabit	               91
+Elegeyo-Marakwet	        102
+
+ SECTION B - ACCESS ANALYSIS
+Q6 .How many facilities in each county are open 24 hours(Open_Whole_day = Yes) ?
+
+SELECT County, COUNT(Name) AS number
+FROM health
+WHERE Open_whole_day = 'Yes'
+GROUP BY County;
+County                    Number of facilities
+Baringo	                18
+Bomet                       16
+Bungoma	                44
+Busia                  	    25
+Elegeyo-Marakwet	          8
+Embu	                      14
+Garissa	                27
+Homa Bay	                43
+Isiolo	                6
+Kajiado	                56
+Kakamega	                35
+Kericho	                24
+Kiambu	                71
+Kilifi	                44
+Kirinyaga	                25
+Kisii	                      32
+Kisumu	                38
+Kitui  	                43
+Kwale	                      8
+Laikipia	                20
+Lamu	                      4
+Machakos	                27
+Makueni	                43
+Mandera	                29
+Marsabit	                16
+Meru	                      29
+Migori	                31
+Mombasa	                68
+Murang'a	                12
+Nairobi	                168
+Nakuru	                60
+Nandi	                      53
+Narok	                      21
+Nyamira	                16
+Nyandarua	                11
+Nyeri	                      19
+Samburu	                8
+Siaya	                      19
+Taita Taveta	          11
+Tana River	                13
+Tharaka-Nithi	          9
+Trans Nzoia	                16
+Turkana	                11
+Uasin Gishu	                18
+Vihiga	                25
+Wajir	                      35
+West Pokot	                14
+
+Q7 .Which counties have zero facilities open at night(Open_late_night) ? These counties have no emergency health access after dark.
+SELECT County,
+        SUM(CASE WHEN Open_late_night = 'Yes'
+		    THEN 1 ELSE 0 END) AS Open_late_night
+FROM health
+GROUP BY County
+HAVING SUM(CASE WHEN Open_late_night = 'Yes'
+           THEN 1 ELSE 0 END) = 0;
+County            Open-late_night
+Bomet	            0
+Elegeyo-Marakwet	0
+Lamu	            0
+Nyandarua	      0
+Taita Taveta	0
+Tana River	      0
+Tharaka-Nithi	0
+Turkana	      0
+Wajir	            0
+
+
+Q8 .How many facilities are open on weekends per county ? Order from fewest to most.
+
+SELECT County,COUNT(Name) AS number
+FROM health
+WHERE Open_weekends = 'Yes'
+GROUP BY county
+ORDER BY number ASC;
+County               number
+Lamu	                9
+Elegeyo-Marakwet	   11
+Tana River	         13
+Kwale	               16
+Taita Taveta	   16
+Isiolo	         19
+Bomet	               20
+Marsabit	         23
+Nyamira	         23
+Samburu	         24
+Siaya	               24
+Baringo	         26
+Tharaka-Nithi	   27
+Laikipia	         28
+Murang'a	         28
+Narok	               28
+Mandera	         30
+Uasin Gishu	         30
+West Pokot	         30
+Migori	         31
+Busia	               33
+Kericho	         33
+Kirinyaga	         34
+Vihiga	         36
+Embu	               37
+Nyeri	               38
+Nyandarua	         39
+Turkana	         40
+Kisii	               41
+Wajir	               46
+Nandi	               49
+Trans Nzoia	         50
+Homa Bay	         51
+Bungoma	         55
+Kisumu	         58
+Makueni	         59
+Kitui	               61
+Kakamega	         65
+Garissa	         70
+Machakos	         77
+Kilifi	         85
+Meru	              101
+Kajiado	        110
+Mombasa	        114
+Nakuru	        117
+Kiambu	        141
+Nairobi	        361
+
+Q9 .What percentage of facilities in each county are Non-Operational ? Order from highest percentage to lowest.
+
+All facilities in this dataset are operational.
+
+SECTION C - OWNERSHIP AND REGULATION
+Q10. For each county show the count of Government vs Non-Government facilities side by side using CASE WHEN and SUM.
+
+SELECT County,COUNT(*) AS total_facilities,
+        SUM(CASE WHEN Owner = 'Ministry of Health'
+		    THEN 1 ELSE 0 END) AS Government,
+		SUM(CASE WHEN Owner != 'Ministry of Health'
+		    THEN 1 ELSE 0 END) AS NonGorvernment
+FROM health
+GROUP BY County
+ORDER BY COUNT(*)ASC;
+Lamu	47	32	15
+Isiolo	49	35	14
+Tana River	55	40	15
+Samburu	72	43	29
+Vihiga	78	40	38
+Taita Taveta84	56	28
+Mandera	85	61	24
+Wajir	    88        85    3
+Marsabit	91	65	26
+Elegeyo-Marakwet	102	83	19
+Laikipia	108	55	53
+West Pokot	111	78	33
+Kwale   	114	78	36
+Busia     	116	75    41
+Nyamira	120	72	48
+Bomet	      128  107    21
+Garissa	133	67	66
+Tharaka-Nithi134	66	68
+Nyandarua	141	66	75
+Narok	      149	96	53
+Trans Nzoia	152	72	80
+Embu	      156	70    86
+Kisii	      159	112	47
+Turkana	163	98	65
+Uasin Gishu	168	106	62
+Nandi	      169	108   61
+Siaya	      177	126   51
+Kericho	183	122	61
+Baringo	187	155	32
+Bungoma	202	113	89
+Kisumu	202	115	87
+Kilifi	203	80	123
+Kirinyaga	204	62	142
+Migori	208	126	82
+Murang'a	219	113	106
+Makueni	236	150	86
+Homa Bay	250	151	99
+Mombasa	250	42	208
+Kakamega	255	152	103
+Kajiado	271	87	184
+Nyeri	      299   97	202
+Kitui	      309   214	 95
+Machakos	320	145	175
+Nakuru	357	128	229
+Kiambu	416	96	320
+Meru	      429  124    305
+Nairobi	783	106	677
+
+           
+           
+Q11. Which Regulatory_body oversees the most facilities nationally ?
+
+SELECT DISTINCT "Regulatory body",COUNT(*) AS count
+FROM health
+GROUP BY "Regulatory body"
+ORDER BY count DESC
+LIMIT 1;
+
+Ministry of Health	4392
+
+Q12. Using CASEWHEN classify each county's dominant ownership as Government Heavy (more than 60% government), Mixed(40 to 60% government) or Private Heavy (less than 40% government).
+
+WITH County_ownership AS (SELECT County,COUNT(*) AS total_facilities,
+SUM(CASE WHEN Owner = 'Ministry of Health'
+    THEN 1 ELSE 0 END)AS government,
+SUM(CASE WHEN Owner != 'Ministry of Health'
+     THEN 1 ELSE 0 END) AS nongorvernment,
+ROUND(SUM(CASE WHEN Owner = 'Ministry of Health'
+      THEN 1 ELSE 0 END) * 100.0/COUNT(*),1)
+	  AS pct_government
+FROM health
+GROUP BY county
+)
+SELECT County,total_facilities,government,pct_government,CASE
+WHEN pct_government > 60 THEN 'Government Heavy'
+WHEN pct_government BETWEEN 40 AND 60 THEN 'Mixed'
+ELSE 'Private Heavy'
+END AS ownership_classification
+FROM county_ownership
+ORDER BY pct_government DESC;
+County     total-facilities   Government   pct_government   Ownership_classification 
+Wajir       	88          	85    	96.6  	Government Heavy
+Bomet       	128               107   	83.6  	Government Heavy
+Baringo     	187         	155   	82.9  	Government Heavy
+Elegeyo-Marakwet	102         	83    	81.4  	Government Heavy
+Tana River  	55          	40     	72.7  	Government Heavy
+Mandera     	85          	61    	71.8  	Government Heavy
+Isiolo      	49          	35    	71.4  	Government Heavy
+Marsabit    	91          	65    	71.4    	Government Heavy
+Siaya       	177         	126   	71.2  	Government Heavy
+Kisii       	159         	112   	70.4  	Government Heavy
+West Pokot  	111         	78    	70.3  	Government Heavy
+Kitui       	309         	214   	69.3  	Government Heavy
+Kwale       	114          	78    	68.4  	Government Heavy
+Lamu        	47           	32    	68.1  	Government Heavy
+Kericho     	183         	122   	66.7  	Government Heavy
+Taita Taveta	84          	 56	      66.7  	Government Heavy
+Busia       	116          	75	      64.7	      Government Heavy
+Narok	            149	            96	      64.4  	Government Heavy
+Nandi       	169          	108    	63.9  	Government Heavy
+Makueni     	236         	150   	63.6  	Government Heavy
+Uasin Gishu 	168         	106   	63.1  	Government Heavy
+Migori      	208         	126   	60.6   	Government Heavy
+Homa Bay    	250          	151   	60.4  	Government Heavy
+Turkana     	163         	98    	60.1  	Government Heavy
+Nyamira     	120         	72    	60.0  	Mixed
+Samburu     	72           	43    	59.7  	Mixed
+Kakamega    	255         	152   	59.6  	Mixed
+Kisumu      	202         	115   	56.9  	Mixed
+Bungoma     	202         	113   	55.9  	Mixed
+Murang'a    	219         	113   	51.6  	Mixed
+Vihiga      	78          	40    	51.3  	Mixed
+Laikipia    	108          	55    	50.9  	Mixed
+Garissa     	133         	67    	50.4  	Mixed
+Tharaka-Nithi	134          	66    	49.3  	Mixed
+Trans Nzoia 	152         	72    	47.4  	Mixed
+Nyandarua   	141         	66    	46.8   	Mixed
+Machakos    	320         	145   	45.3  	Mixed
+Embu	            156          	70    	44.9   	Mixed
+Kilifi      	203         	80    	39.4  	Private Heavy
+Nakuru      	357         	128    	35.9  	Private Heavy
+Nyeri       	299         	97    	32.4  	Private Heavy
+Kajiado     	271         	87    	32.1  	Private Heavy
+Kirinyaga   	204          	62     	30.4  	Private Heavy
+Meru        	429         	124   	28.9  	Private Heavy
+Kiambu      	416         	96    	23.1  	Private Heavy
+Mombasa     	250         	42    	16.8  	Private Heavy
+Nairobi     	783         	106   	13.5  	Private Heavy
+
+SECTION D - KEPH LEVEL ANALYSIS
+Q13. How many facilities exist at each Keph_Level nationally ?
+SELECT "Keph level",COUNT(*) AS number_of_facilities
+FROM health
+GROUP BY "Keph level"
+ORDER BY number_of_facilities DESC;
+Keph level   number_of_facilities
+Level 2	7127
+Level 3	1317
+Level 4	454
+Level 5	18
+None  	12
+Level 6	4
+
+
+
+Q14. Which counties have no Level 5 or Level 6 facilities(major hospitals) ? These counties have no referral hospitals -a critical finding.
+
+SELECT County,
+SUM(CASE WHEN "Keph level" = 'Level 5' THEN 1 ELSE 0 END) AS Level5,
+SUM(CASE WHEN "Keph level" = 'Level 6' THEN 1 ELSE 0 END) AS Level6
+FROM health
+GROUP BY county
+HAVING
+Level5 = 0
+AND
+Level6 = 0
+County          Level 5     Level 6
+Baringo      	0     	0
+Bungoma      	0     	0
+Busia       	0     	0
+Elegeyo-Marakwet	0     	0
+Homa Bay    	0     	0
+Isiolo      	0     	0
+Kajiado     	0      	0
+Kericho     	0     	0
+Kilifi      	0     	0
+Kirinyaga   	0     	0
+Kitui       	0     	0
+Kwale       	0     	0
+Laikipia    	0     	0
+Lamu        	0     	0
+Makueni     	0     	0
+Mandera     	0     	0
+Marsabit    	0     	0
+Migori      	0     	0
+Murang'a    	0     	0
+Nandi       	0     	0
+Narok       	0     	0
+Nyamira     	0     	0
+Nyandarua   	0     	0
+Samburu      	0     	0
+Siaya       	0     	0
+Taita Taveta	0     	0
+Tana River  	0     	0
+Tharaka-Nithi	0     	0
+Turkana     	0     	0
+Vihiga      	0     	0
+Wajir       	0     	0
+West Pokot   	0     	0
+
+
+       	
+
+
+Q15. Show each county's facility breakdown by Keph_Level using GROUP BY.
+
+SELECT County,COUNT(*) AS total_facilities,
+SUM(CASE WHEN "Keph level" = 'Level 2' THEN 1 ELSE 0 END) AS level_2,
+SUM(CASE WHEN "Keph level" = 'Level 3' THEN 1 ELSE 0 END) AS level_3,
+SUM(CASE WHEN "Keph level" = 'Level 4' THEN 1 ELSE 0 END) AS level_4,
+SUM(CASE WHEN "Keph level" = 'Level 5' THEN 1 ELSE 0 END) AS level_5,
+SUM(CASE WHEN "Keph level" = 'Level 6' THEN 1 ELSE 0 END) AS level_6
+FROM health
+GROUP BY county
+ORDER BY County;
+ 
+County     Total   level level level level level
+           facilities 2  3     4     5      6
+Baringo	187	162	21	4	0	0
+Bomet	128	105	17	5	1	0
+Bungoma	202	161	29	12	0	0
+Busia	116	91	18	7	0	0
+Elegeyo-Marakwet	102	77	18	7	0	0
+Embu	156	135	15	4	1	0
+Garissa	133	99	23	10	1	0
+Homa Bay	250	181	54	15	0	0
+Isiolo	49	40	6	3	0	0
+Kajiado	271	226	33	11	0	0
+Kakamega	255	181	60	13	1	0
+Kericho	183	149	19	15	0	0
+Kiambu	416	347	43	25	1	0
+Kilifi	203	175	20	8	0	0
+Kirinyaga	204	169	29	6	0	0
+Kisii	159	104	34	20	1	0
+Kisumu	202	135	43	21	1	0
+Kitui	309	238	58	13	0	0
+Kwale	114	101	11	2	0	0
+Laikipia	108	87	13	8	0	0
+Lamu	47	38	6	3	0	0
+Machakos	320	275	33	10	1	0
+Makueni	236	194	33	9	0	0
+Mandera	85	54	24	7	0	0
+Marsabit	91	69	18	4	0	0
+Meru	429	372	35	21	1	0
+Migori	208	161	35	12	0	0
+Mombasa	250	214	20	13	2	0
+Murang'a	219	193	17	9	0	0
+Nairobi	783	608	135	30	4	3
+Nakuru	357	280	55	21	1	0
+Nandi	169	149	15	5	0	0
+Narok	149	112	30	7	0	0
+Nyamira	120	70	43	7	0	0
+Nyandarua	141	114	24	3	0	0
+Nyeri	299	263	26	9	1	0
+Samburu	72	64	5	3	0	0
+Siaya	177	123	45	9	0	0
+Taita Taveta	84	60	15	9	0	0
+Tana River	55	45	7	3	0	0
+Tharaka-Nithi	134	111	17	6	0	0
+Trans Nzoia	152	128	16	7	1	0
+Turkana	163	136	17	8	0	0
+Uasin Gishu	168	130	26	10	0	1
+Vihiga	78	49	24	5	0	0
+Wajir	88	54	24	10	0	0
+West Pokot	111	98	8	5	0	0
+
+SECTION E - ADVANCED USING VIEWS,CTEs,WINDOW FUNCTIONS
+Q16. Create a View called county_health_summary showing county,total facilities,operational count, and percentage operational.
+
+CREATE VIEW county_health_summary AS 
+SELECT County,COUNT(*) AS Total_Facilities,
+SUM(CASE WHEN "Operation status" = 'Operational' THEN 1 ELSE 0 END) AS Operational_Count,
+ROUND(100.0* SUM(CASE WHEN "Operation status" = 'Operational'
+THEN 1 ELSE 0 END)/ COUNT(*), 2) AS Percentage_Operational
+FROM health
+GROUP BY County;
+
+SELECT * FROM county_health_summary;
+County     Total_Facilities   Operational_Count   Percentage_Operational
+Baringo	187	187	100.0
+Bomet	128	128	100.0
+Bungoma	202	202	100.0
+Busia	116	116	100.0
+Elegeyo-Marakwet	102	102	100.0
+Embu	156	156	100.0
+Garissa	133	133	100.0
+Homa Bay	250	250	100.0
+Isiolo	49	49	100.0
+Kajiado	271	271	100.0
+Kakamega	255	255	100.0
+Kericho	183	183	100.0
+Kiambu	416	416	100.0
+Kilifi	203	203	100.0
+Kirinyaga	204	204	100.0
+Kisii	159	159	100.0
+Kisumu	202	202	100.0
+Kitui	309	309	100.0
+Kwale	114	114	100.0
+Laikipia	108	108	100.0
+Lamu	47	47	100.0
+Machakos	320	320	100.0
+Makueni	236	236	100.0
+Mandera	85	85	100.0
+Marsabit	91	91	100.0
+Meru	429	429	100.0
+Migori	208	208	100.0
+Mombasa	250	250	100.0
+Murang'a	219	219	100.0
+Nairobi	783	783	100.0
+Nakuru	357	357	100.0
+Nandi	169	169	100.0
+Narok	149	149	100.0
+Nyamira	120	120	100.0
+Nyandarua	141	141	100.0
+Nyeri	299	299	100.0
+Samburu	72	72	100.0
+Siaya	177	177	100.0
+Taita Taveta	84	84	100.0
+Tana River	55	55	100.0
+Tharaka-Nithi	134	134	100.0
+Trans Nzoia	152	152	100.0
+Turkana	163	163	100.0
+Uasin Gishu	168	168	100.0
+Vihiga	78	78	100.0
+Wajir	88	88	100.0
+West Pokot	111	111	100.0
+
+Q17. Write a CTE that calculates average facilities per county nationally.Then show all counties below that average alongside their gap from the average.
+
+WITH national_avg AS (
+SELECT ROUND(AVG(county_total), 1) AS avg_facilities
+FROM (SELECT County, COUNT(*) AS county_total
+FROM health
+GROUP BY county
+)
+),
+county_totals AS (
+SELECT County, COUNT(*) AS total_facilities
+FROM health
+GROUP BY county
+)
+SELECT c.County,c.total_facilities,n.avg_facilities AS national_average,
+ROUND (n.avg_facilities - c.total_facilities, 1) AS gap_below_average
+FROM county_totals c, national_avg n
+WHERE c.total_facilities < n.avg_facilities
+ORDER BY gap_below_average DESC;
+County    total_facilities  national_average  gap_below_average  
+Lamu  	47          	190.0       	143.0
+Isiolo	49          	190.0       	141.0
+Tana River	55          	190.0       	135.0
+Samburu	72          	190.0       	118.0
+Vihiga	78          	190.0        	112.0
+Taita Taveta84          	190.0       	106.0
+Mandera	85          	190.0       	105.0
+Wajir 	88          	190.0       	102.0
+Marsabit	91          	190.0       	99.0
+Elegeyo-Marakwet102     	190.0       	88.0
+Laikipia	108         	190.0       	82.0
+West Pokot	111         	190.0       	79.0
+Kwale 	114         	190.0       	76.0
+Busia 	116         	190.0       	74.0
+Nyamira	120         	190.0       	70.0
+Bomet 	128         	190.0        	62.0
+Garissa	133         	190.0       	57.0
+Tharaka-Nithi134        	190.0       	56.0
+Nyandarua	141         	190.0       	49.0
+Narok  	149         	190.0       	41.0
+Trans Nzoia	152         	190.0       	38.0
+Embu  	156         	190.0       	34.0
+Kisii 	159         	190.0       	31.0
+Turkana	163         	190.0       	27.0
+Uasin Gishu	168         	190.0       	22.0
+Nandi  	169         	190.0       	21.0
+Siaya  	177         	190.0       	13.0
+Kericho	183         	190.0       	7.0
+Baringo	187         	190.0       	3.0
+
+Q18. Using RANK and PARTITION BY show each facility ranked within its county by Keph_Level.This shows the mix of facility levels within each county.
+
+SELECT County,Name,"Keph level","Facility type",
+RANK() OVER (PARTITION BY county
+ORDER BY "Keph level" DESC
+) AS rank_in_county
+FROM health
+ORDER BY County, rank_in_county;
+County      Name             Keph level   Facility type     rank_in_county
+Baringo	Mercy Hospital	Level 4	Primary care hospitals	1
+Baringo	Baringo County Refferal Hospital	Level 4	Secondary care hospitals	1
+Baringo	Marigat Sub District Hospital	Level 4	Primary care hospitals	1
+Baringo	Eldama Ravine District Hospital	Level 4	Secondary care hospitals	1
+Baringo	Lodeng'o Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Akwichatis Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Barnet Memorial Hospital	Level 3	Primary care hospitals	5
+Baringo	Kolowa Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Chemolingot District Hospital	Level 3	Secondary care hospitals	5
+Baringo	Equator Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Olkokwe Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Eldama Ravine (AIC) Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Nginyang Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Salawa Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Mogorwa Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Kampi Samaki Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Torongo Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Esageri Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Kiptagich Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Kituro Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Kimalel Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Emining Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Kisanana Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Ngubereti Health Centre	Level 3	Basic primary health care facility	5
+Baringo	Kabartonjo District Hospital	Level 3	Secondary care hospitals	5
+Baringo	Kapkitony	Level 2	Basic primary health care facility	26
+Baringo	Kisasi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkuikui Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tinomoi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Barut Medical clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Baringo County Beyond Zero Mobile Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Lanet medical centre	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Dr.Finn consultants	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Lelgut Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Orokwo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Magonoi Dispensary (Kabarnet)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kasoiyo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ayatya Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Rebeko Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tiloi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tunoiwo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkombe Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Krezze Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Chemasusu Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sinonin Dispensary (Koibatek)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Saos Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Muserechi  Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Neema Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kasaka	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kiptoim Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Emsos Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kimose Dispenary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Rosoga Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kabogor Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kimngorom Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Mogotio Town Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tian Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Rotu Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ravine Medical and ENT Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Eldama Ravine Medical Centre	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Nazareth Medical Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Eldama Ravine Nursing Home	Level 2	Basic primary health care facility	26
+Baringo	Shalom Medical Clinical	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Nogoi Medical Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Mogotio Medical Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tionybei Medical Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ravine Glory Health Care Services	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Mwafrika Institute of Development	Level 2	Administrative Offices	26
+Baringo	Plesian Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kabarnet Womens' Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	AIC Ebenezer	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kabarnet Faith Clinic	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kiplombe Dispensary (Koibatek)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Simotwet Dispensary ( Koibatek)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Moigutwo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kibiryokwonin Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Rondonin Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kalabata Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kipsogon Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kamar Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ng'endalel Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Waseges Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kipkitur Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kibias Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kabiyet Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkomoi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Chesongo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sabatia Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Bartabwa Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tirimionin Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Atiar Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kipsyenan Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ngoron Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Loiwat Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Barpello Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Komolion Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Churo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Chesirimion Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kokwototo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkiamo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Molosirwe Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kaptimbor Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kaptumin Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kositei Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tangulbei Health Centre	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tugumoi Dispensary (Lembus Kwen)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Koitebes Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Toniok Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kabimoi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapindasim Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ochii Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sandai Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Mormorio Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Cheplambus Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Molok Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ol-Arabel Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Muchukwo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Mugurin Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sigoro Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Solian Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sirwa Dispensary (Mogotio)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Arama Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Bartolimo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Aiyebo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sibilo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Ngetmoi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Bekibon Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tebei Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Maji Moto Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Maji Mazuri Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Poi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Yatya Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Molos Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Riwo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sabor Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Radat Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kasisit Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kasok Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sorok Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kasiela Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kaptum Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kaptiony Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Katibel Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkole Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapchepkor Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkelelwa Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kaplel Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkuei Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kasitet Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Keturwo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Illinga'rua Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Cheberen Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Talai Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sore Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Igure Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tirriondonin Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Bossei Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sumeiyon Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Timboiywo Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Borrowonin Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Tinet Dispensary (Koibatek)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Likwon Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kimugul Dispensary (Baringo North)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kipcherere Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Loboi Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Koroto Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kipsacho Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Koriema Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kinyach Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kiboino Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kiptuno Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Lebolos Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sagat Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Karen Roses Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kabarnet High School Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kisonei Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapturo Dispensary (Bartabwa)	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kapkein Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Sacho School Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kipsaraman Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Mogotio Catholic Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kiserian Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Salawa Catholic Mission Dispensary PHC	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Marigat Catholic Mission	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Kuikui Dispensary	Level 2	Dispensaries and clinic-out patient only	26
+Baringo	Seretunin Health Centre	Level 2	Basic primary health care facility	26
+Baringo	Barwessa Health Centre	Level 2	Dispensaries and clinic-out patient only	26
+	VCT	37
+
+
+
+Q19. Using ROW_NUMBER rank all counties by total facilities from most to fewest.Show which counties rank in the bottom 10.
+
+WITH county_ranked AS (
+SELECT County, COUNT(*) AS total_facilities,
+ROW_NUMBER() OVER (ORDER BY COUNT(*) ASC) AS national_rank
+FROM health
+GROUP BY county
+)
+SELECT national_rank, County,total_facilities
+FROM county_ranked
+WHERE national_rank <= 10
+ORDER BY national_rank;
+national_rank  County   total_facilities
+1           	Lamu        	47
+2            	Isiolo      	49
+3            	Tana River  	55
+4           	Samburu     	72
+5           	Vihiga      	78
+6           	Taita Taveta	84
+7	            Mandera      	85
+8           	Wajir       	88
+9           	Marsabit    	91
+10    	Elegeyo-Marakwet  	102
+
+Q20. Write a CTE that joins health_facilities to your Kenya_counties table to calculate facilities per 100,000 people per county.Then classify using CASE WHEN as Critical (below 10 per 100K),Low(10 to 25),Adequate (25 to 50), or Well Served(above 50)
+
+WITH facility_counts AS (
+SELECT County,COUNT(*) AS total_facilities
+FROM health
+GROUP BY county
+),
+county_access AS (
+SELECT f.County,f.total_facilities,k.population,
+ROUND(f.total_facilities * 100000.0 / k.population, 1)
+AS facilities_per_100k
+FROM facility_counts f
+JOIN kenya_counties_clean k ON LOWER(f.County) = LOWER(k.county)
+)
+SELECT County,total_facilities,population,facilities_per_100k,
+CASE
+WHEN facilities_per_100k < 10 THEN 'Critical'
+WHEN facilities_per_100k BETWEEN 10 AND 25 THEN 'Low'
+WHEN facilities_per_100k BETWEEN 25 AND 50 THEN 'Adequate'
+ELSE 'Well Served'
+END AS access_classification
+FROM county_access
+ORDER BY facilities_per_100k ASC;
+County     total_facilities  population  facilities_per_100k   access_classification
+Mandera	85          	867457	9.8               	Critical
+Wajir 	88          	781263	11.3               	Low
+Bungoma	202         	1670570	12.1                	Low
+Kisii 	159         	1266860	12.6              	Low
+Narok 	149         	1157873	12.9              	Low
+Busia 	116         	893681	13.0              	Low
+Kwale 	114         	866820	13.2              	Low
+Vihiga	78          	590013	13.2              	Low
+Kakamega	255         	1867579	13.7              	Low
+Kilifi	203         	1453787	14.0              	Low
+Uasin Gishu	168         	1163186	14.4              	Low
+Bomet 	128         	875689	14.6              	Low
+Trans Nzoia	152         	990341	15.3              	Low
+Garissa	133         	841353	15.8               	Low
+Nakuru	357         	2162202	16.5               	Low
+Kiambu	416         	2417735	17.2              	Low
+Tana River	55          	315943	17.4              	Low
+Kisumu	202         	1155574	17.5              	Low
+Turkana	163         	926976	17.6              	Low
+Nairobi	783         	4397073	17.8              	Low
+Siaya 	177         	993183	17.8              	Low
+West Pokot	111         	621241	17.9              	Low
+Isiolo	49          	268002	18.3              	Low
+Migori	208         	1116436	18.6              	Low
+Nandi 	169         	885711	19.1              	Low
+Marsabit	91          	459785	19.8              	Low
+Nyamira	120         	598252	20.1              	Low
+Kericho	183         	902556	20.3              	Low
+Mombasa	250         	1208333	20.7              	Low
+Laikipia	108         	518560	20.8              	Low
+Homa Bay	250         	1131950	22.1              	Low
+Nyandarua	141         	638570	22.1              	Low
+Machakos	320         	1421932	22.5              	Low
+Samburu	72          	310327	23.2              	Low
+Makueni	236         	987653	23.9              	Low
+Kajiado	271          	1117840	24.2              	Low
+Taita Taveta84          	340671	24.7              	Low
+Embu  	156         	608599	25.6              	Adequate
+Kitui 	309         	1136187	27.2              	Adequate
+Meru   	429         	1545714	27.8              	Adequate
+Baringo	187          	666763	28.0              	Adequate
+Lamu  	47          	143920	32.7              	Adequate
+Kirinyaga	204         	610411	33.4              	Adequate
+Nyeri 	299         	759164	39.4               	Adequate
+
+
+ 
