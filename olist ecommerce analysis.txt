@@ -1,0 +1,845 @@
+OLIST E-COMMERCE SALES ANALYSIS
+
+Data Source : Brazilian E-Commerce Public Dataset by Olist
+Tools : Python, Pandas, Matplotlib
+Project Objective :To analyze e-commerce sales, customers, products, sellers, payments, reviews, and delivery performance and generate business insights that could support better decision-making.
+
+PHASE 1 - DATASET UNDERSTANDING
+
+     CUSTOMERS TABLE
+File:olist_customers_dataset.csv
+ (a) Number of rows:
+99441
+ (b) Number of columns:
+5
+ (c) Columns:
+
+print(customers_df.columns)
+Index(['customer_id', 'customer_unique_id', 'customer_zip_code_prefix',
+       'customer_city', 'customer_state'],
+      dtype='str')
+ (d) What i think one row represents:
+ One row represents a customer record associated with an order.
+
+  (e) Datatypes and missing values
+
+#   Column                    Non-Null Count  Dtype
+---  ------                    --------------  -----
+ 0   customer_id               99441 non-null  str  
+ 1   customer_unique_id        99441 non-null  str  
+ 2   customer_zip_code_prefix  99441 non-null  int64
+ 3   customer_city             99441 non-null  str  
+ 4   customer_state            99441 non-null  str  
+no missing values
+
+(e) Checking for duplicate rows
+print("Duplicate rows:",
+      customers_df.duplicated().sum())
+Duplicate rows: 0
+
+(f)Understanding the IDs
+   (i)customer_id:
+Identifies a customers record associated with each individual order.It changes for each order.
+   (ii)customer_unique_id:
+Identifies the actual customer across their different orders.Use customer_unique_id when analyzing individual customers, especially repeat purchases and total customer revenue.
+
+(g) Identify the geographic columns i.e the location columns
+ customer_zip_code_prefix  
+   customer_city              
+   customer_state
+
+What this table could help me analyze 
+. Customer locations by city and state
+. Number of customers by state
+. Geographic distribution of customers
+. Customer purchasing locations when connected to the Orders table
+.Repeat customers using customer_unique_id
+.Number of unique customers
+
+           ORDERS TABLE
+File:olist_orders_dataset.csv
+ (a) Number of rows:
+99441
+ (b) Number of columns:
+8
+ (c) Columns:
+Index(['order_id', 'customer_id', 'order_status', 'order_purchase_timestamp',
+       'order_approved_at', 'order_delivered_carrier_date',
+       'order_delivered_customer_date', 'order_estimated_delivery_date'],
+      dtype='str')
+
+(d) What does one row appear to represent.
+. Number of orders
+. Orders by status
+. Orders over time
+. Monthly/quarterly/yearly order trends
+. Delivery performance
+. Actual vs estimated delivery dates
+. Shipping delays
+. Order cancellations
+. Oder processing time
+. Year over year order growth
+
+(e) Column interpretations:
+order_id: 
+Identifies the customer associated with the order.                         
+- customer_id:
+Unique identifier for a particular order.                      
+- order_status :
+Shows the status of the order.                                          
+- order_purchase_timestamp :
+Date and time when the customer placed the order.                     
+- order_approved_at:
+Date and time when the order/payment was approved.                             
+- order_delivered_carrier_date:
+Date and time when the order was handed to the carrier.                  
+- order_delivered_customer_date:
+Date and time when the order was delivered to the customer.
+- order_estimated_delivery_date:
+Estimated date when the order was expected to be delivered.
+
+(f) Datatypes and missing values
+print(orders_df.info()) 
+0   order_id                       99441 non-null  str  
+ 1   customer_id                    99441 non-null  str  
+ 2   order_status                   99441 non-null  str  
+ 3   order_purchase_timestamp       99441 non-null  str  
+ 4   order_approved_at              99281 non-null  str  
+ 5   order_delivered_carrier_date   97658 non-null  str  
+ 6   order_delivered_customer_date  96476 non-null  str  
+ 7   order_estimated_delivery_date  99441 non-null  str  
+no missing values 
+
+(g) Checking for duplicate rows
+print("Duplicate rows:",
+      orders_df.duplicated().sum())
+Duplicate rows: 0
+
+(h) Order statuses
+print(orders_df["order_status"].unique())
+[  'delivered',    'invoiced',     'shipped',  'processing', 'unavailable',
+    'canceled',     'created',    'approved']
+Length: 8, dtype: str
+
+(i)How many orders have each status
+print(orders_df["order_status"].value_counts())
+order_status
+delivered      96478   order reached the customer
+shipped         1107   order was handed to the carrier and was in transit
+canceled         625   order was cancelled and did not proceed normally
+unavailable      609   order could not be fulfilled coz maybe the product was unavailable
+invoiced         314   An invoice was issued for the order i.e the purchase was formally                                         
+                         recorded
+processing       301   The order is being prepared or processed before shipment
+created            5   The order was created and placed but the payment or order process 
+                         was not completed yet                                              
+approved           2    The payment or order was approved.
+
+(j) The relationship of orders table with other tables.
+customer_id from customers table
+
+         ORDER ITEMS TABLE
+(a) What does one row represent ?
+One product or item within an order.
+
+(b) Number of rows ?
+112650
+(c) Number of columns ?
+7
+(d) What i think each column means ?
+order_id  :Number of that particular order               
+order_item_id :position of an item within that order                                        
+product_id :unique ID of a particular product. The same product can appear in many 
+            different orders.             
+seller_id  :it identifies the seller or business responsible for selling that item.              
+shipping_limit_date :deadline by which the seller is expected to hand the item over
+                     for shipment                 
+price  :cost of each individual item                                            
+freight_value:shipping charge associated with that item                                     
+
+
+(e) Important IDs ?
+order_id
+order_item_id
+product_id
+seller_id
+
+(f) Possible relationships with other tables ?
+order_id from orders table
+
+(g) Missing values
+#   Column               Non-Null Count   Dtype  
+---  ------               --------------   -----  
+ 0   order_id             112650 non-null  str    
+ 1   order_item_id        112650 non-null  int64  
+ 2   product_id           112650 non-null  str    
+ 3   seller_id            112650 non-null  str    
+ 4   shipping_limit_date  112650 non-null  str    
+ 5   price                112650 non-null  float64
+ 6   freight_value        112650 non-null  float64
+
+
+(h) Checking for duplicate rows.
+print("Duplicate rows:",order_items_df.duplicated ().sum ())
+Duplicate rows: 0
+
+(i) What this table could help me analyze.
+ . Total sales or revenue
+. Revenue by product
+.Revenue by product category after connecting to Products
+.Number of items sold
+.Top selling products
+.Average product price
+.Freight/shipping costs
+.Revenue by seller
+.Seller performance
+. Product sales overtime after connecting with Orders
+. Sales by geographic area after connecting with Sellers/Customers
+
+            ORDER PAYMENTS TABLE
+(a) What does one row represent ?
+It represents one payment record associated with an order.
+(b) Number of rows
+103886
+(c) Number of columns
+5
+(d) Column names
+print(order_payments_df.columns)
+Index(['order_id', 'payment_sequential', 'payment_type',
+       'payment_installments', 'payment_value'],
+      dtype='str')
+
+(e) what i think each column means
+order_id: Identifies the order associated with the payment                
+payment_sequential: It is the sequence number of a payment within an order.An order can 
+                    have payment 1,payment 2                                      
+payment_type: It indicates the payment method, such as credit card, boleto, voucher, or 
+              debit card                                 
+payment_installments: It is the number of installments the customer chose to pay in eg  
+                      1 installment, 3 installments                                    
+payment_value: How much the buyer paid.It is the value of a payment made or recorded for an 
+               order. 
+
+(f) Important IDs
+order_id
+
+(g) Possible relationships with other tables
+order_id from orders table
+
+(h) Missing values
+#   Column                Non-Null Count   Dtype  
+---  ------                --------------   -----  
+ 0   order_id              103886 non-null  str    
+ 1   payment_sequential    103886 non-null  int64  
+ 2   payment_type          103886 non-null  str    
+ 3   payment_installments  103886 non-null  int64  
+ 4   payment_value         103886 non-null  float64
+
+(i) Checking for duplicate rows
+print("Duplicate rows:",order_payments_df.duplicated ().sum ())
+Duplicate rows: 0
+
+(j) What could this table help me analyze.
+.Total payment value
+. Payment methods customers use
+. Most popular payment method
+. Average payment value
+. Payment value by payment type
+. Number of installments customers choose
+. Average number of installments
+. Payment behaviour overtime after connecting to orders
+. Payment patterns by customers or location after connecting with other tables.
+
+                 ORDER REVIEWS
+(a) What does one row represent?
+One row represents a review record associated with an order, including the customer's rating, comments, and review dates.
+(b) Number of rows
+99224
+(c) Number of columns
+7
+(d) What i think each column means
+review_id : It is the unique ID of the review itself, not the person.                 
+order_id : It is the ID of the order being reviewed.                 
+review_score : It is the rating given by the customer, from 1 to 5.                                              
+review_comment_title : Subject of a review                                   
+review_comment_message : It is the written message or comment provided by the customer.                                 
+review_creation_date : When the review was made                    
+review_answer_timestamp : It is the time the company responded to the review                
+
+(e) Important IDs
+review_id
+order_id
+(f) Possible relationships with other tables
+order_id from customers, orders, order items, order payments tables
+(g) Missing values
+print(order_reviews_df.info ())
+#   Column                   Non-Null Count  Dtype
+---  ------                   --------------  -----
+ 0   review_id                99224 non-null  str  
+ 1   order_id                 99224 non-null  str  
+ 2   review_score             99224 non-null  int64
+ 3   review_comment_title     11568 non-null  str  
+ 4   review_comment_message   40977 non-null  str  
+ 5   review_creation_date     99224 non-null  str  
+ 6   review_answer_timestamp  99224 non-null  str 
+
+(h) Checking for duplicate rows.
+print("Duplicate rows:",order_reviews_df.duplicated ().sum())
+Duplicate rows: 0
+
+
+(i) What this table could help me analyze.
+. Average customer review score
+. Customer satisfaction
+. Number of 1 star, 2 star, 3 star, 4 star and 5 star reviews
+. Percentage of positive vs negative ratings
+. Common complaints from review comments
+. Review trends overtime
+. How quickly reviews receive responses
+. Customer feedback by order
+. Product or category performance after connecting this table to Order Items and Products
+
+              PRODUCTS TABLE
+(a) What does one row represent ?
+It represents one unique product and contains descriptive and physical information about that product.
+(b) Number of rows
+32951
+(c) Number of columns
+9
+(d) What i think each column means
+product_id : It is the unique identifier of the product regardless of which order it 
+             appears in
+product_category_name : It is the name of the category the product belongs to
+product_name_lenght : Number of letters in the product name
+product_description_lenght : It is the length of the product description measured in 
+                               characters
+product_photos_qty : Number of photos associated with the product listing.
+product_weight_g : Weight of the products in grams
+product_length_cm : Length in centimetres
+product_height_cm : Height in centimetres
+product_width_cm  : Width in centimetres
+
+(e) Important IDs
+product_id
+(f) Possible relationships with other tables
+product_id from order_items table
+(g) Missing values
+print(products_df.info ())
+#   Column                      Non-Null Count  Dtype  
+---  ------                      --------------  -----  
+ 0   product_id                  32951 non-null  str    
+ 1   product_category_name       32341 non-null  str    
+ 2   product_name_lenght         32341 non-null  float64
+ 3   product_description_lenght  32341 non-null  float64
+ 4   product_photos_qty          32341 non-null  float64
+ 5   product_weight_g            32949 non-null  float64
+ 6   product_length_cm           32949 non-null  float64
+ 7   product_height_cm           32949 non-null  float64
+ 8   product_width_cm            32949 non-null  float64
+(h) Checking for duplicate rows
+print("Duplicate rows:",products_df.duplicated ().sum ())
+Duplicate rows: 0
+(i) What this table could help me analyze.
+. Product characteristics
+. Product categories
+. Product dimensions
+. Weight
+. Photos
+.Descriptions
+. When combined with the order items table, it can help analyze product sales and category performance.
+
+                   SELLERS TABLE
+(a) What does one row represent ?
+It represents one seller and contains identifying and location information about that seller.
+(b) Number of rows
+3095
+(b) Number of columns
+4
+(c) Column names
+Index(['seller_id', 'seller_zip_code_prefix', 'seller_city', 'seller_state']
+(d) What each column means
+seller_id:Specific number of the seller
+seller_zip_code_prefix:It is the first digits or prefix of the sellers ZIP or postal code
+seller_city : Town where seller is located
+seller_state : Brazilian state or administrative region 
+(e) Important IDs
+seller_id
+(f) Possible relationships with other tables
+None
+(g) Missing values
+#   Column                  Non-Null Count  Dtype
+---  ------                  --------------  -----
+ 0   seller_id               3095 non-null   str  
+ 1   seller_zip_code_prefix  3095 non-null   int64
+ 2   seller_city             3095 non-null   str  
+ 3   seller_state            3095 non-null   str  
+
+(h) Checking for duplicate rows
+print("Duplicate rows:",sellers_df.duplicated ().sum ())
+Duplicate rows: 0
+(i) What this table could help me analyze
+. Geographic distribution of sellers
+. Seller performance, sales and revenue by seller or state.
+
+                     GEOLOCATION TABLE
+(a) What does one row represent ?
+It represents a geolocation record for a ZIP code prefix including its geographic coordinates and associated city or state.
+(b) Number of rows
+1000163 
+(c) Number of columns
+5
+(d) Column names
+print(geolocation_df.columns)
+Index(['geolocation_zip_code_prefix', 'geolocation_lat', 'geolocation_lng',
+       'geolocation_city', 'geolocation_state'],
+      dtype='str')
+(e) What i think each column means
+geolocation_zip_code_prefix : it is the ZIP code prefix associated with the geographic 
+                              record
+geolocation_lat : latitude coordinate associated with the geolocation record
+geolocation_lng : longitude coordinate associated with the geolocation record
+geolocation_city : The associated city
+geolocation_state : The associated Brazilian state
+
+(f) Important IDs
+geolocation_zip_code_prefix         
+
+(g) Missing values
+print(geolocation_df.info ())
+#   Column                       Non-Null Count    Dtype  
+---  ------                       --------------    -----  
+ 0   geolocation_zip_code_prefix  1000163 non-null  int64  
+ 1   geolocation_lat              1000163 non-null  float64
+ 2   geolocation_lng              1000163 non-null  float64
+ 3   geolocation_city             1000163 non-null  str    
+ 4   geolocation_state            1000163 non-null  str  
+
+(h) Checking for duplicate rows
+Duplicate rows : 261831
+(i) What this table could help me analyze.
+. Geographic distribution of customers and sellers
+. Map locations
+. Performing spatial analysis when connected to the Customers and Sellers tables.
+(j) Possible relationships with other tables
+customer_zip_code_prefix from customers table
+seller_zip_code_prefix from sellers table
+
+           PRODUCT CATEGORY NAME TRANSLATION
+(a). What does one row represent ?
+it represents translation of product category name from Brazilian Portuguese to English.
+
+(b). Number of rows
+71
+(c). Number of columns
+2
+(d). What i think each column means
+product_category_name : These are product category names
+product_category_name_english : These are English translations of the category names
+(e). Important IDs
+None
+(f). Possible relationships with other tables
+product category name from products table
+(g). Missing values
+print(category_translation_df.info ())
+#   Column                         Non-Null Count  Dtype
+---  ------                         --------------  -----
+ 0   product_category_name          71 non-null     str  
+ 1   product_category_name_english  71 non-null     str  
+(h). Checking for duplicate rows
+(i). What this table could help me analyze
+.It allows us to produce client friendly analysis and visualizations without requiring the client to understand Portuguese.
+
+  PHASE 4 - DATA CLEANING & PREPARATION
+Step 1 : Check missing values across all 9 tables
+1.CUSTOMERS TABLE : 0 missing values
+2.ORDERS TABLE :
+print(orders_df.isna(). sum ())
+
+order_approved_at                 160
+order_delivered_carrier_date     1783
+order_delivered_customer_date    2965
+
+Decision:
+Keep the missing values because they represent unavailable / not-applicable timestamps. Do not replace them with 0 or arbitrary dates.
+For delivery-time analysis,use only orders with the required dates available.
+
+There are 8 delivered orders with a missing order_delivered_customer_date
+Note:
+These records may affect calculations that require an actual delivery date, so delivery_time analysis should exclude orders without the required timestamps. 
+
+3.ORDER ITEMS TABLE : 0 missing value
+
+4.ORDER PAYMENTS TABLE : 0 missing values
+
+5.ORDER REVIEWS TABLE :
+print(order_reviews_df.isna(). sum ())
+
+review_comment_title       87656
+review_comment_message     58247
+
+Interpretation:
+These are optional customer-written fields. A customer can submit a review score without writing a title or message.
+
+Decision:
+Keep the missing values.Do not replace them with 0 and do not delete the records.
+
+ 
+6.PRODUCTS TABLE :
+print(products_df.isna(). sum ())
+
+product_category_name         610
+product_name_lenght           610
+product_description_lenght    610
+product_photos_qty            610
+product_weight_g                2
+product_length_cm               2
+product_height_cm               2
+product_width_cm                2
+
+Important finding:
+The same 610 products are missing all four listing-related fields. The same 2 products are missing all four physical measurements.
+
+Cleaning decision:
+Keep the missing values. Do not replace them with 0 or invented values.
+The affected products may still have sales records in the order items table.
+
+Column-name cleaning:
+product name lenght changed to product name length
+product description lenght changed to product description length
+
+7.SELLERS TABLE : 0 missing value
+
+8.GEOLOCATION TABLE : 0 missing value
+  Duplicate cleaning:-
+Original duplicate rows: 261,831
+The duplicates were exact duplicate rows across all 5 columns.
+Cleaning action: Removed exact duplicate rows using drop_duplicates().
+Remaining records:738332 rows, 5 columns
+Important:
+Repeated ZIP-code prefixes are not automatically duplicates.Only completely identical rows were removed.
+
+9.CATEGORY TRANSLATION TABLE : 0 missing value
+
+STAGE 3 - TABLE RELATIONSHIPS & DATASET PREPARATION
+Table                         Key column                Connects to
+Customers                      customer_id              Orders
+Orders                          order_id                Order items, Payments, Reviews               
+Orders                          customer_id             Customers
+Order items                     order_id                Orders
+Order items                     seller_id               Products
+Order items                     seller_id               Sellers
+Products                        product_id              Order items
+Sellers                         seller_id               Order items
+Category Translation            product_category_name   Products
+
+PHASE 5 - TABLE RELATIONSHIPS & VALIDATION
+Objective:
+To verify that the key columns connecting the Olist tables are valid before merging the data for analysis.
+
+Tasks completed:
+.Checked customer_id between Orders and Customers - 99,441 matches
+.Checked order_id between Order items and Orders - 112,650 matches
+.Checked product_id between Order Items and Products - 112,650 matches
+.Checked seller_id between Order Items and Sellers - 112,650 matches
+.Checked order_id between Payments and Orders - 103,886 matches
+.Checked order_id between Reviews and Orders - 99,224 matches
+.Validated the Category Translation table - 0 missing values and 0 exact duplicate rows
+.Confirmed the main tables and their key columns before merging.
+
+Conclusion:
+The key relationships between the main Olist tables were validated successfully. There were no unmatched IDs in the relationship checks performed, so the datasets are ready to be combined for analysis.
+
+PHASE 6 - CREATING THE ANALYSIS DATASET
+Objective:
+Create one combined, analysis-ready dataset by merging the cleaned Olist datasets needed for business analysis.
+Steps Completed:
+1. Created a copy of orders_df
+   . Created analysis_df so the original cleaned orders dataset would not be modified.
+   . Initial size:99,441 rows,8 columns
+2. Merged Customers
+   .Merged using customer_id.
+   .Result:99,441 rows, 12 columns
+   .Missing customer IDs after the merge:0
+3. Merged Order Items
+   .Merged using order_id.
+   .The number of rows increased because one order can contain multiple products.
+   .Result before removing unmatched rows:113,425 rows,14 columns.
+   .This increase was expected because Order Items contains multiple items for some orders.
+4. Checked Order Items
+   .Found 775 rows without product_id.
+   .Found 775 rows without seller_id.
+   .These represented order-level records that had no matching item information.
+5. Merged Products
+   .Merged using product_id.
+   .Product information was added without creating unwanted duplicate item rows.
+   .Some product category information was missing, which was retained rather than deleting the affected products.
+6. Merged Sellers
+   .Merged using seller_id.
+   .Seller information was added to the analysis dataset.
+7. Processed Payments
+   .Payments were aggregated by order_id first before merging.
+   .This was necessary because some orders have multiple payment records.
+   .Aggregating first prevents the payment merge from unnecessarily multiplying rows and causing revenue overcounting.
+8.Merged Category Translation
+   .Standardized product_category_name.
+   .Added the English category names using the category translation dataset.
+9.Removed unmatched order-level rows
+   .Since the main analysis is item-level, the 775 rows without product_id were removed.
+   .Code used:analysis_df.dropna(subset=["product_id"])
+Final Dataset
+Final size:112,650 rows, 31 columns
+The final analysis_df contains information from:
+Orders, Customers, Order Items, Products, Sellers, Payments, Category Translation
+Output File
+The final dataset was saved as:Olist_analysis_dataset.csv
+Confirmation received:"Analysis dataset saved successfully"
+Key Lesson
+The purpose of Stage 9 was to create a single reliable dataset for the analysis stage while avoiding accidental row multiplication and revenue overcounting during merges.
+
+The dataset is now ready for stage 10 - Exploratory/Business Analysis.
+
+PHASE 6: ANALYSIS
+
+             REVENUE
+Q1. What is the total revenue by 
+   (I).Year
+revenue_by_year = analysis_df.groupby("year") ["price"].sum( )
+print(revenue_by_year)
+
+year
+2016      49785.92
+2017    6155806.98
+2018    7386050.80
+   (ii)quarter
+revenue_by_quarter = analysis_df.groupby("quarter") ["price"].sum( )
+print(revenue_by_quarter)
+
+quarter
+1    3519382.70
+2    4157326.71
+3    3447010.76
+4    2467923.53
+
+Q2. Which months have the highest and lowest sales?
+
+revenue_by_month = analysis_df.groupby(["year", "month"]) ["price"].sum( )
+sorted_monthly_revenue = revenue_by_month.sort_values(ascending=False)
+print(sorted_monthly_revenue)
+
+year  month
+Highest_revenue : 2017  11       1010271.37
+Lowest_revenue : 2016  12            10.90
+
+Q3. Is the business growing year over year?
+
+jan_sep_2017 = analysis_df[(analysis_df["year"] == 2017) &
+                           (analysis_df["month"].between(1, 9))]
+revenue = jan_sep_2017["price"].sum ( )
+jan_sep_2018 = analysis_df[(analysis_df["year"] == 2018) &
+                           (analysis_df["month"].between(1, 9))]
+revenue2 = jan_sep_2018["price"].sum ( )
+
+growth = (revenue2 - revenue) / revenue * 100
+print(growth)
+
+97.62526964553113
+Yes, the business shows strong year-over-year revenue growth. Recorded product revenue increased by approximately 97,63% from January-September 2017 to January-September 2018.
+
+               PRODUCT
+Q1. Which product categories generate the most revenue?
+
+most_revenue = analysis_df.groupby("product_category_name_english")["price"].sum( )
+sorted_most_revenue = most_revenue.sort_values(ascending = False)
+print(sorted_most_revenue.head(3))
+
+health_beauty            1258681.34
+watches_gifts            1205005.68
+bed_bath_table           1036988.68
+
+Q2. Which products are most profitable?
+Profitability analysis was not performed because the Olist dataset does not contain product cost data required to calculate actual profit or loss.
+      CUSTOMER
+Q1. Which customer segments generate most revenue?
+
+customer_segments = pd.qcut(
+    customer_revenue, 3,
+    labels=["Low", "Medium", "High"])
+customer_analysis = pd.DataFrame({
+    "revenue" : customer_revenue,
+    "segment" : customer_segments
+    })
+segment_revenue = customer_analysis.groupby("segment")["revenue"].sum ( )
+print(segment_revenue)
+
+segment
+Low       1114877.51
+Medium    2841851.13
+High      9634915.06
+High value customers generated the most revenue, contributing approximately R$9.63 million, compared with R$2.84 million from medium_value customers and R$1.11 million from low value customers.
+
+Q2. Who are the top 10 customers by revenue?
+
+customer_revenue = analysis_df.groupby("customer_unique_id")["price"].sum( )
+sorted_customer_revenue = customer_revenue.sort_values(ascending = False)
+print(sorted_customer_revenue.head(10))
+
+customer_unique_id
+0a0a92112bd4c708ca5fde585afaa872    13440.0
+da122df9eeddfedc1dc1f5349a1a690c     7388.0
+763c8b1c9c68a0229c42c9fc6f662b93     7160.0
+dc4802a71eae9be1dd28f5d788ceb526     6735.0
+459bef486812aa25204be022145caa62     6729.0
+ff4159b92c40ebe40454e3e6a7c35ed6     6499.0
+4007669dec559734d6f53e029e360987     5934.6
+eebb5dda148d3893cdaf5b5ca3040ccb     4690.0
+5d0a2980b292d049061542014e8960bf     4599.9
+48e1ac109decbb87765a3eade6854098     4590.0
+
+        GEOGRAPHIC
+Q1. Which regions and states perform best?
+
+location = analysis_df.groupby("customer_state")["price"].sum( )
+location_sorted = location.sort_values(ascending = False)
+print(location_sorted.head(3))
+
+SP    5202955.05
+RJ    1824092.67
+MG    1585308.03
+
+        BUSINESS PROBLEM QUESTIONS
+Q1. Is the business growing?
+(I)Monthly order volume overtime.
+monthly_orders = analysis_df.groupby(["year", "month"])["order_id"].nunique( ).reset_index( )
+print(monthly_orders)
+   year  month  order_id
+0   2016      9         3
+1   2016     10       308
+2   2016     12         1
+3   2017      1       789
+4   2017      2      1733
+5   2017      3      2641
+6   2017      4      2391
+7   2017      5      3660
+8   2017      6      3217
+9   2017      7      3969
+10  2017      8      4293
+11  2017      9      4243
+12  2017     10      4568
+13  2017     11      7451
+14  2017     12      5624
+15  2018      1      7220
+16  2018      2      6694
+17  2018      3      7188
+18  2018      4      6934
+19  2018      5      6853
+20  2018      6      6160
+21  2018      7      6273
+22  2018      8      6452
+23  2018      9         1
+(ii) Year-over-Year(YoY)growth rate
+jan_aug_2017 = monthly_revenue[(monthly_revenue["year"] == 2017)
+                               &
+                               (monthly_revenue["month"] <=8)]["price"].sum( )
+jan_aug_2018 = monthly_revenue[(monthly_revenue["year"] ==2018)
+                                                                                              &
+                                                                                              (monthly_revenue["month"] <=8)
+                                                                                              ]["price"].sum( )
+growth = ((jan_aug_2018 - jan_aug_2017) / jan_aug_2017) * 100
+print("Jan-Aug 2017 revenue:", jan_aug_2017)
+print("Jan-Aug 2018 revenue:", jan_aug_2018)
+print("YoY growth:", growth, "%")
+
+Jan-Aug 2017 revenue: 3113000.3200000003
+Jan-Aug 2018 revenue: 7385905.8
+YoY growth: 137.26003985762517 %
+
+Olist shows strong overall growth, although the growth rate fluctuates from month to month. Revenue increased from R$3.11 million in January-August 2017 to R$7.39 million in January-August 2018, representing approximately 137.3% year-over-year growth.Order volume also increased substantially over the same period.
+Growth accelerated particularly during early 2017, and again in November 2017, when monthly orders increased by 63.1% to 7,451 orders.Growth slowed at several points, including April and June 2017, and during parts of 2018, when monthly order growth became smaller and sometimes negative. 
+Overall, the business was expanding strongly, with the most rapid growth occurring during 2017, followed by a period of slower and more fluctuating growth in 2018.The analysis excludes September 2018 from interpretation because only part of that month is present in the dataset. 
+
+Q2. What is hurting customer satisfaction?
+average_review = analysis_df.groupby("delivery_status")["review_score"].mean() 
+print(average_review)
+
+delivery_status
+Late       2.548884
+On-time    4.154820 
+  
+low_review_rate = (
+    analysis_df.assign(low_review=analysis_df["review_score"] <= 2)
+    .groupby("delivery_status")
+    ["low_review"]
+    .mean() * 100
+    )
+print(low_review_rate)
+
+delivery_status
+Late       53.414801
+On-time    12.846458
+Late delivery is strongly associated with lower customer satisfaction. Late orders averaged 2.55/5 compared with 4.15/5 for on-time orders, and 53.4% of late orders received 1-2 stars versus 12.8% of on-time orders.
+
+OVERALL BUSINESS QUESTIONS
+1. How large is this business?
+
+print("Total orders:", analysis_df["order_id"].nunique ( ))
+print("Total customers:", analysis_df["customer_unique_id"].nunique( ))
+print("Total sellers:", analysis_df["seller_id"].nunique( ))
+print("Total revenue:", analysis_df["price"].sum( ))
+
+Total orders: 98666
+Total customers: 95420
+Total sellers: 3095
+Total revenue: 13651923.47
+2. How many orders are delivered compared with the total number of orders.
+
+print("Total orders:", analysis_df["order_id"].nunique ( ))
+print("Delivered Orders:", analysis_df[analysis_df["order_status"] == "delivered"]["order_id"].nunique( ))
+print("Pct delivered:", (analysis_df[analysis_df["order_status"] == "delivered"]["order_id"].nunique( )/analysis_df["order_id"].nunique(
+))* 100
+      )
+Total orders: 98666
+Delivered Orders: 96478
+Pct delivered: 97.78241744876655
+3. What payment method do most customers prefer?
+payment_summary = order_payments_df.groupby("payment_type").size( )
+sorted_payment_summary = payment_summary.sort_values(ascending=False)
+print(sorted_payment_summary)
+
+credit_card    76795
+
+4. What is a typical order worth?
+print("minimum orders :", analysis_df["payment_value"].min ( ))
+print("maximum orders :", analysis_df["payment_value"].max ( ))
+print("average orders :", analysis_df["payment_value"].mean ( ))
+print("median orders :", analysis_df["payment_value"].median ( ))
+
+minimum orders : 9.59
+maximum orders : 13664.08
+average orders : 180.18411751727547
+median orders : 114.42
+5. Is the business growing overtime?
+revenue_by_year = analysis_df.groupby("year")["price"].sum( )
+sorted_revenue_by_year = revenue_by_year.sort_index(ascending=True)
+print(sorted_revenue_by_year)
+
+year
+2016      49912.61
+2017    6191576.30
+2018    7410434.56
+
+
+
+
+                       
+
+
+                                                                                                                                                                                      
+
+
+
+               
+
+
+
+
+Name: 0, dtype: str
